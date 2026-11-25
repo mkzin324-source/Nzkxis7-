@@ -1,0 +1,495 @@
+<html lang="pt-BR"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arthur</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        :root {
+            --neon-blue: #007bff; /* Cor Azul */
+            --bg-dark: #050a14;
+            --card-bg: #0f121a;
+            --border-color: #1a2a45;
+            --text-main: #ffffff;
+            --text-muted: #667a99;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: #000;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+
+        .app-container {
+            width: 100%; max-width: 380px; background: var(--card-bg);
+            border: 1px solid var(--border-color); border-radius: 24px;
+            padding: 25px 20px; display: flex; flex-direction: column; gap: 15px;
+            position: relative; z-index: 1; box-shadow: 0 0 40px rgba(0, 123, 255, 0.15);
+            margin: 0 15px;
+        }
+
+        .header { display: flex; flex-direction: column; gap: 5px; position: relative; margin-bottom: 5px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 22px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+        .version-tag { background: var(--neon-blue); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+        .header p { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+
+        .btn-external {
+            width: 100%; background: rgba(0, 123, 255, 0.1); border: 1px solid var(--neon-blue);
+            border-radius: 12px; padding: 12px; display: flex; justify-content: center; align-items: center;
+            gap: 10px; color: var(--neon-blue); font-weight: 800; font-size: 14px;
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.2);
+        }
+        .btn-external svg { width: 18px; height: 18px; fill: var(--neon-blue); }
+
+        .function-list { display: flex; flex-direction: column; gap: 10px; }
+        .function-item {
+            display: flex; align-items: center; background: #161a23; border: 1px solid #222a38;
+            border-radius: 16px; padding: 15px; justify-content: space-between; transition: 0.2s;
+        }
+        
+        /* Removido o ícone e ajustado o texto */
+        .text-content h3 { font-size: 14px; font-weight: 800; color: #fff; text-transform: uppercase; }
+        .text-content p { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.3; max-width: 220px; }
+
+        .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: #fff; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--neon-blue); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Botão Injetar ajustado (sem o + e centralizado) */
+        .btn-inject {
+            width: 100%; background: var(--neon-blue); color: #fff; border: none; border-radius: 16px;
+            padding: 18px; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 0 20px rgba(0, 123, 255, 0.4);
+            display: flex; justify-content: center; align-items: center;
+        }
+        .btn-inject:active { transform: scale(0.98); background: #0056b3; }
+
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 999; }
+        .spinner { width: 50px; height: 50px; border: 4px solid var(--border-color); border-top: 4px solid var(--neon-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="app-container">
+        <div class="header">
+            <div class="header-top">
+                <h1>Arthur</h1>
+                <span class="version-tag">V 5.3</span>
+            </div>
+            <p>Arthur</p>
+        </div>
+
+        <div class="btn-external">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+            PAINEL EXTERNAL
+        </div>
+
+        <div class="function-list">
+            <!-- AUXILIO AIMBOT (Sem ícone) -->
+            <div class="function-item">
+                <div class="text-content">
+                    <h3>Auxilio Aimbot</h3>
+                    <p>Trava a mira suavemente no inimigo.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chk-auxilio" onchange="enviarAuxilioAimbot(this.checked)" data-hz="sw1">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- NO RECUO (Sem ícone) -->
+            <div class="function-item">
+                <div class="text-content">
+                    <h3>No Recuo</h3>
+                    <p>Reduz o recuo da arma nos disparos.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chk-recoil" onchange="enviarNoRecoil(this.checked)" data-hz="sw2">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- PRECISÃO MÁXIMA (Sem ícone) -->
+            <div class="function-item">
+                <div class="text-content">
+                    <h3>Precisão Máxima</h3>
+                    <p>Concentra os tiros do alvo com mais precisão.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chk-precisao" onchange="enviarPrecisao(this.checked)" data-hz="sw3">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- BOTÃO INJETAR SEM O SÍMBOLO DE "+" -->
+        <button class="btn-inject" onclick="injetar()" data-hz="bt1">
+            INJETAR ARQUIVOS
+        </button>
+    </div>
+
+    <!-- TAG OCULTA PARA CORRIGIR O ERRO DO SAFARI -->
+    <a id="link-freefire" href="freefire://" style="display: none;">Abrir FF</a>
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; color: var(--neon-blue); font-weight: bold;">INJETANDO...</p>
+    </div>
+
+    <script>
+        // --- SISTEMA DE PING ---
+        function iniciarPing() {
+            setInterval(async () => {
+                try {
+                    await fetch('http://localhost:3000/api/ping', { method: 'POST' });
+                } catch (e) {}
+            }, 3000);
+        }
+        window.onload = iniciarPing;
+
+        // --- AUXILIO AIMBOT (Offsets de Cabeça) ---
+        async function enviarAuxilioAimbot(ativado) {
+            const offsetsHead = {
+                get_HeadBoneTransform: "0x0076F91D",
+                get_HeadCollider: "0x0076ED56",
+                get_HeadTF: "0x007F353C",
+                GetHeadPosition: "0x007F395C",
+                get_NeckBone: "0x0077F6E9",
+                m_boneNeck: "0x0044436C",
+                neckRatio: "0x0044440C",
+                GetHeadScale: "0x002EF358",
+                GetHeadShotDamageScale: "0x002EF341"
+            };
+            try {
+                await fetch('http://localhost:3000/api/auxilio-aimbot', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ativar: ativado, codigo: ativado ? offsetsHead : null })
+                });
+            } catch (e) { console.log("API offline."); }
+        }
+
+        // --- NO RECUO ---
+        async function enviarNoRecoil(ativado) {
+            const codigo = { reductionFactor: 0.85, historyLimit: 5, baseParams: { verticalStep: 0.02, horizontalStep: 0.01, recoveryRate: 0.05 } };
+            try {
+                await fetch('http://localhost:3000/api/no-recoil', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ativar: ativado, codigo: ativado ? codigo : null })
+                });
+            } catch (e) { console.log("API offline."); }
+        }
+
+        // --- PRECISÃO MÁXIMA ---
+        async function enviarPrecisao(ativado) {
+            const codigo = { recoilScale: 1.2, spreadCorrection: 0.95, maxPrecision: true };
+            try {
+                await fetch('http://localhost:3000/api/ativar-precisao', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ativar: ativado, codigo: ativado ? codigo : null })
+                });
+            } catch (e) { console.log("API offline."); }
+        }
+
+        // --- INJETAR (Abre o jogo via tag <a> para o Safari) ---
+        async function injetar() {
+            document.getElementById('loading').style.display = 'flex';
+            
+            const auxilio = document.getElementById('chk-auxilio').checked;
+            const recoil = document.getElementById('chk-recoil').checked;
+            const precisao = document.getElementById('chk-precisao').checked;
+
+            try {
+                await fetch('http://localhost:3000/api/injetar', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ funcoes: { auxilio_aimbot: auxilio, no_recoil: recoil, ativar_precisao: precisao } })
+                });
+            } catch (e) { console.log("API offline."); }
+
+            setTimeout(() => {
+                const link = document.getElementById('link-freefire');
+                link.click(); 
+                document.getElementById('loading').style.display = 'none';
+            }, 1500);
+        }
+
+        // --- FUNDO ANIMADO ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width; this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = Math.random() * 1.5 + 0.5;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 123, 255, 0.5)'; ctx.fill();
+            }
+        }
+        for (let i = 0; i < 80; i++) { particles.push(new Particle()); }
+        function drawLines() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    let dx = particles[i].x - particles[j].x; let dy = particles[i].y - particles[j].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.beginPath(); ctx.strokeStyle = `rgba(0, 123, 255, ${0.3 * (1 - dist / 120)})`;
+                        ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
+                    }
+                }
+            }
+        }
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); }); drawLines();
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+
+<script>document.addEventListener('DOMContentLoaded',function(){
+document.querySelectorAll('[data-hz="sw1"]').forEach(function(el){el.addEventListener(el.type==='checkbox'?'change':'click',function(event){var ativo=!!el.checked;try{#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <iostream>
+
+// Estrutura de Vetor 3D para cálculos espaciais
+struct Vector3 {
+    float x, y, z;
+    Vector3() : x(0), y(0), z(0) {}
+    Vector3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+    
+    Vector3 operator-(const Vector3& other) const { return Vector3(x - other.x, y - other.y, z - other.z); }
+    Vector3 operator+(const Vector3& other) const { return Vector3(x + other.x, y + other.y, z + other.z); }
+    Vector3 operator*(float f) const { return Vector3(x * f, y * f, z * f); }
+};
+
+// Estrutura de Ângulos (Pitch/Yaw)
+struct Vector2 {
+    float x, y;
+    Vector2() : x(0), y(0) {}
+    Vector2(float _x, float _y) : x(_x), y(_y) {}
+};
+
+class MemoryAPI {
+public:
+    // Simula leitura de memória do jogo
+    static Vector3 GetLocalPlayerPos() { return {0.0f, 0.0f, 0.0f}; } // Offset base
+    static Vector3 GetEntityBone(int id, int boneIndex) { 
+        // Lógica real: Lê lista de entidades -> Verifica ID -> Retorna posição do bone
+        return {100.0f, 200.0f, 50.0f}; 
+    }
+    static Vector2 GetViewAngles() { return {0.0f, 0.0f}; }
+    static void WriteViewAngles(Vector2 angles) { /* Escreve diretamente no ponteiro de câmera */ }
+    static bool IsEntityAlive(int id) { return true; }
+};
+
+class HeadshotAimbot {
+private:
+    float smoothAim = 0.90f; // Suavização: 0.9 é muito rápido, parece xit
+    float maxDistance = 40.0f; // Distância máxima de lock em metros
+    int targetBone = 8; // Índice padrão para cabeça na maioria das engines
+
+public:
+    void ExecuteHeadshotLock() {
+        Vector3 localPos = MemoryAPI::GetLocalPlayerPos();
+        Vector2 currentAngles = MemoryAPI::GetViewAngles();
+        
+        // Lista simulada de IDs de inimigos próximos
+        std::vector<int> enemyIds = {101, 102, 103, 104, 105}; 
+        
+        Vector3 bestTargetHead;
+        float closestDist = 99999.0f;
+        bool found = false;
+
+        for (int id : enemyIds) {
+            if (!MemoryAPI::IsEntityAlive(id)) continue;
+
+            // Obtém posição da cabeça do alvo
+            Vector3 headPos = MemoryAPI::GetEntityBone(id, targetBone);
+            
+            // Calcula vetor direção
+            Vector3 delta = headPos - localPos;
+            float dist = sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
+
+            // Filtra por distância máxima
+            if (dist < maxDistance && dist < closestDist) {
+                closestDist = dist;
+                bestTargetHead = headPos;
+                found = true;
+            }
+        }
+
+        if (found) {
+            // Converte posição mundial para ângulos de câmera
+            Vector2 newAngles = CalculateAngle(localPos, bestTargetHead);
+            
+            // Aplica suavização (Smooth)
+            Vector2 smoothedAngles = Interpolate(currentAngles, newAngles, smoothAim);
+            
+            // Escreve os novos ângulos instantaneamente
+            MemoryAPI::WriteViewAngles(smoothedAngles);
+        }
+    }
+
+private:
+    // Converte coordenadas mundiais para ângulos de rotação
+    Vector2 CalculateAngle(const Vector3& src, const Vector3& dst) {
+        Vector3 delta = src - dst;
+        float pitch = atan2(-delta.z, sqrt(delta.x * delta.x + delta.y * delta.y));
+        float yaw = atan2(delta.y, delta.x);
+        // Converte radianos para graus se necessário (depende do motor do jogo)
+        return Vector2(pitch * (180.0f / M_PI), yaw * (180.0f / M_PI));
+    }
+
+    // Interpolação linear para suavizar o movimento da mira
+    Vector2 Interpolate(Vector2 start, Vector2 end, float t) {
+        return Vector2(
+            start.x + (end.x - start.x) * t,
+            start.y + (end.y - start.y) * t
+        );
+    }
+};
+}catch(e){alert('Erro: '+e.message)}})});
+document.querySelectorAll('[data-hz="sw2"]').forEach(function(el){el.addEventListener(el.type==='checkbox'?'change':'click',function(event){var ativo=!!el.checked;try{#include <cmath>
+#include <random>
+#include <chrono>
+
+// Reutilizando estruturas definidas anteriormente...
+struct Vector3 {
+    float x, y, z;
+    Vector3() : x(0), y(0), z(0) {}
+    Vector3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+    Vector3 operator-(const Vector3& other) const { return Vector3(x - other.x, y - other.y, z - other.z); }
+    Vector3 operator+(const Vector3& other) const { return Vector3(x + other.x, y + other.y, z + other.z); }
+};
+
+struct Vector2 {
+    float x, y;
+    Vector2() : x(0), y(0) {}
+    Vector2(float _x, float _y) : x(_x), y(_y) {}
+};
+
+class WeaponState {
+public:
+    float GetCurrentSpreadSeed() { return 0.5f; } // Leitura do seed aleatório
+    Vector2 GetCurrentSpreadVector() { return {0.1f, 0.1f}; } // Leitura do spread atual
+    float GetCurrentRecoilX() { return 0.05f; }
+    float GetCurrentRecoilY() { return 0.02f; }
+};
+
+class MaxPrecisionEngine {
+private:
+    float recoilScale = 1.2f; // Multiplicador de correção ( >1.0 é agressivo/xit )
+    float spreadCorrection = 0.95f; // Quanto do spread corrigir (0.95 = quase perfeito)
+    
+    // Gerador de números aleatórios sincronizado com o jogo
+    std::mt19937 rng;
+
+public:
+    MaxPrecisionEngine() : rng(std::chrono::steady_clock::now().time_since_epoch().count()) {}
+
+    void ApplyMaxPrecision() {
+        Vector2 currentAngles = GetCameraAngles();
+        WeaponState weapon = GetWeaponState();
+        
+        // 1. Captura o spread atual gerado pelo jogo
+        Vector2 currentSpread = weapon.GetCurrentSpreadVector();
+        
+        // 2. Calcula o vetor de correção inverso
+        // Se o jogo jogou a mira para +0.1 X, nós corrigimos -0.1 X
+        Vector2 correction = {
+            -(currentSpread.x * spreadCorrection),
+            -(currentSpread.y * spreadCorrection)
+        };
+
+        // 3. Captura o recuo vertical e horizontal
+        float recoilX = weapon.GetCurrentRecoilX() * recoilScale;
+        float recoilY = weapon.GetCurrentRecoilY() * recoilScale;
+
+        // 4. Aplica a correção aos ângulos atuais
+        Vector2 correctedAngles = {
+            currentAngles.x - recoilX, // Corrige recuo vertical
+            currentAngles.y + correction.y // Corrige spread horizontal
+        };
+
+        // 5. Escreve os ângulos corrigidos na memória
+        SetCameraAngles(correctedAngles);
+    }
+
+private:
+    Vector2 GetCameraAngles() { return {0.0f, 0.0f}; /* Leitura de memória */ }
+    void SetCameraAngles(Vector2 angles) { /* Escrita de memória */ }
+    WeaponState GetWeaponState() { return WeaponState(); }
+};
+}catch(e){alert('Erro: '+e.message)}})});
+document.querySelectorAll('[data-hz="sw3"]').forEach(function(el){el.addEventListener(el.type==='checkbox'?'change':'click',function(event){var ativo=!!el.checked;try{#include <cmath>
+#include <vector>
+#include <queue>
+
+struct Vector2 {
+    float x, y;
+    Vector2() : x(0), y(0) {}
+    Vector2(float _x, float _y) : x(_x), y(_y) {}
+    Vector2 operator-(const Vector2& other) const { return Vector2(x - other.x, y - other.y); }
+    Vector2 operator+(const Vector2& other) const { return Vector2(x + other.x, y + other.y); }
+};
+
+class RecoilReducer {
+private:
+    float reductionFactor = 0.85f; // Reduz 85% do recuo
+    std::queue<Vector2> recoilHistory; // Histórico dos últimos frames
+    int historyLimit = 5; // Mantém os últimos 5 frames de recuo
+    
+    // Parâmetros base do recuo da arma (ex: AK-47)
+    struct BaseRecoil {
+        float verticalStep = 0.02f;
+        float horizontalStep = 0.01f;
+        float recoveryRate = 0.05f;
+    } baseParams;
+
+public:
+    void ExecuteRecoilReduction() {
+        Vector2 currentRec = GetCurrentRecoveValue();
+        Vector2 prevAngles = GetPreviousAngles();
+        
+        // Adiciona o recuo atual ao histórico
+        recoilHistory.push(currentRec);
+        if (recoilHistory.size() > historyLimit) {
+            recoilHistory.pop();
+        }
+
+        // Calcula a média do recuo recente para suavizar a correção
+        Vector2 avgRec = {0.0f, 0.0f};
+        for (const auto& r : recoil
+}catch(e){alert('Erro: '+e.message)}})});
+document.querySelectorAll('[data-hz="bt1"]').forEach(function(el){el.addEventListener(el.type==='checkbox'?'change':'click',function(event){var ativo=!!el.checked;try{window.location.href = "intent://#Intent;scheme=freefire;package=com.dts.freefireth;end";
+}catch(e){alert('Erro: '+e.message)}})});
+});</script></body></html>
